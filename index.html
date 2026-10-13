@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Calcula el beneficio neto por camisa vendida en Etsy desde Portugal: comisiones, IVA y Offsite Ads.">
+<meta name="description" content="Calcula el beneficio por camisa en Etsy desde Portugal y la rentabilidad de una feria con DTF bar.">
 <title>Calculadora Etsy Camisas</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -79,19 +79,39 @@ tr.total td{font-weight:600;border-bottom:0;border-top:2px solid var(--fg)}
 .answer{font:600 24px var(--mono);font-variant-numeric:tabular-nums;color:var(--ink)}
 .note{font-size:12.5px;color:var(--muted);max-width:70ch;margin:0}
 .ex{font-size:12px;color:var(--thread);font-weight:600}
+.tabs{display:flex;gap:6px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.tabs button{font:600 14px var(--body);color:var(--muted);background:none;border:0;border-bottom:3px solid transparent;padding:8px 12px;cursor:pointer;margin-bottom:-1px}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--ink)}
+.mix{width:100%;border-collapse:collapse;font-size:14px;min-width:640px}
+.mix th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:right;font-weight:600;padding:6px 6px;border-bottom:1px solid var(--line)}
+.mix th:first-child,.mix td:first-child{text-align:left}
+.mix td{padding:4px 6px;border-bottom:1px solid var(--line);text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+.mix td:first-child{font-family:var(--body)}
+.mix input{width:72px;font:500 14px var(--mono);text-align:right;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:5px 6px}
+.mix input.name{width:100%;min-width:150px;text-align:left;font-family:var(--body)}
+.mix tfoot td{font-weight:600;border-bottom:0;border-top:2px solid var(--fg)}
+.mbar{display:inline-block;height:8px;border-radius:2px;background:var(--c-profit);vertical-align:middle;margin-right:6px}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:600px){.kpis{grid-template-columns:minmax(0,1fr)}}
+.btn{font:600 13px var(--body);color:var(--ink);background:var(--ink-soft);border:0;border-radius:6px;padding:7px 12px;cursor:pointer;align-self:flex-start}
+.del{background:none;border:0;color:var(--muted);cursor:pointer;font-size:16px;padding:2px 6px}
 </style>
-<style>body{margin:0}img{max-width:100%}</style>
+
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 </head>
 <body>
-
-
 <div class="wrap">
   <header>
-    <h1>Calculadora de rentabilidad · camisas en Etsy</h1>
-    <p>Para una tienda con cuenta bancaria en Portugal. Cambia los costes por los tuyos y verás al momento cuánto te queda por camisa.</p>
+    <h1>Calculadora de rentabilidad · camisas DTF</h1>
+    <p>Para vender desde Portugal en Etsy o en ferias. Cambia los costes por los tuyos y verás al momento cuánto te queda.</p>
   </header>
 
-  <div class="grid">
+  <div class="tabs" role="tablist">
+    <button type="button" role="tab" id="t-etsy" aria-selected="true" aria-controls="tab-etsy">Etsy (por camisa)</button>
+    <button type="button" role="tab" id="t-feria" aria-selected="false" aria-controls="tab-feria">Feria · DTF bar</button>
+  </div>
+
+  <div class="grid" id="tab-etsy" role="tabpanel">
     <form class="panel" id="f" onsubmit="return false">
       <span class="ex">Valores de ejemplo: sustitúyelos por tus costes reales</span>
       <fieldset>
@@ -161,6 +181,43 @@ tr.total td{font-weight:600;border-bottom:0;border-top:2px solid var(--fg)}
 
       <p class="note">Comisiones aplicadas: publicación 0,20 $ (≈0,18 €), transacción 6,5 % y procesamiento de pago 4 % + 0,30 € sobre el total del pedido (camisa + envío), según las tarifas de Etsy para Portugal en 2026. Offsite Ads tiene un tope de 100 $ por pedido. Revisa las tarifas en tu panel de Etsy antes de fijar precios; esto es una estimación, no asesoría fiscal.</p>
     </section>
+  </div>
+
+  <div id="tab-feria" role="tabpanel" hidden style="display:flex;flex-direction:column;gap:22px">
+    <section class="panel" aria-live="polite">
+      <span class="ex">Valores de ejemplo: costes de la hoja de proveedores y precios orientativos de feria</span>
+      <div class="kpis">
+        <div class="card"><span class="label">Beneficio de la feria</span><b id="fProfit">–</b><span class="note" id="fProfitNote"></span></div>
+        <div class="card"><span class="label">Ventas para cubrir gastos fijos</span><b id="fBE">–</b><span class="note" id="fBENote"></span></div>
+        <div class="card"><span class="label">Facturación (IVA incl.)</span><b id="fRev">–</b><span class="note" id="fRevNote"></span></div>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="mix">
+          <thead><tr><th>Producto</th><th>Prenda €</th><th>Transfer €</th><th>Precio venta €<br>(IVA incl.)</th><th>Uds. que esperas vender</th><th>Te queda / ud</th><th>Total</th><th></th></tr></thead>
+          <tbody id="mixBody"></tbody>
+          <tfoot><tr><td>Total productos</td><td></td><td></td><td></td><td id="fUnits"></td><td></td><td id="fGross"></td><td></td></tr></tfoot>
+        </table>
+      </div>
+      <button type="button" class="btn" id="addRow">+ Añadir producto</button>
+      <p class="note">"Te queda / ud" = precio sin IVA − comisión de tarjeta − prenda − transfer. La prenda va sin IVA si compras con NIF de empresa.</p>
+    </section>
+
+    <form class="panel" onsubmit="return false">
+      <fieldset>
+        <legend class="label">Gastos fijos de la feria</legend>
+        <div class="row"><label for="fStand">Puesto / inscripción</label><div class="num"><input id="fStand" type="number" step="1" min="0" value="40"><span>€</span></div></div>
+        <div class="row"><label for="fTravel">Transporte y aparcamiento</label><div class="num"><input id="fTravel" type="number" step="1" min="0" value="10"><span>€</span></div></div>
+        <div class="row"><label for="fOther">Otros<small>comida, decoración, bolsas…</small></label><div class="num"><input id="fOther" type="number" step="1" min="0" value="10"><span>€</span></div></div>
+      </fieldset>
+      <div class="sep"></div>
+      <fieldset>
+        <legend class="label">Cobro e impuestos</legend>
+        <label class="toggle"><input id="fVatOn" type="checkbox" checked><span>Cobro IVA en mis ventas<small>Desmárcalo si estás exenta (art. 53.º CIVA)</small></span></label>
+        <div class="row"><label for="fVat">Tipo de IVA</label><div class="num"><input id="fVat" type="number" step="1" min="0" value="23"><span>%</span></div></div>
+        <div class="row"><label for="fCardPct">Ventas pagadas con tarjeta</label><div class="num"><input id="fCardPct" type="number" step="5" min="0" max="100" value="70"><span>%</span></div></div>
+        <div class="row"><label for="fCardFee">Comisión del TPV móvil<small>revisa la tarifa de tu terminal</small></label><div class="num"><input id="fCardFee" type="number" step="0.1" min="0" value="1.7"><span>%</span></div></div>
+      </fieldset>
+    </form>
   </div>
 </div>
 
@@ -235,6 +292,80 @@ function render(){
 }
 document.querySelectorAll('input').forEach(i=>i.addEventListener('input',render));
 render();
+
+// ---- Tabs
+function showTab(which){
+  const e=which==='etsy';
+  $('tab-etsy').hidden=!e; $('tab-feria').hidden=e;
+  $('t-etsy').setAttribute('aria-selected',e); $('t-feria').setAttribute('aria-selected',!e);
+  try{localStorage.setItem('tab',which)}catch(_){}
+}
+$('t-etsy').onclick=()=>showTab('etsy');
+$('t-feria').onclick=()=>{showTab('feria');renderF()};
+try{ if(localStorage.getItem('tab')==='feria') showTab('feria') }catch(_){}
+if(location.hash==='#feria') showTab('feria');
+
+// ---- Feria
+const defaults=[
+ ['Sudadera con capucha',11,1.5,50,4],
+ ['Sudadera cuello redondo',8.5,1.5,42,4],
+ ['Camiseta',6.5,1.5,30,10],
+ ['Tote bag',2.5,1.2,18,15],
+ ['Camiseta / body infantil',4,1,20,5],
+ ['Cuaderno tapa de tela',3,0.8,15,6],
+ ['Estuche de lona',2.6,0.6,12,6],
+];
+const body=$('mixBody');
+function addRow(r){
+  const tr=document.createElement('tr');
+  const id=Math.random().toString(36).slice(2,8);
+  tr.innerHTML=`<td><input class="name" id="n${id}" aria-label="Producto" value="${r[0]}"></td>
+  <td><input id="c${id}" aria-label="Coste prenda" type="number" step="0.1" min="0" value="${r[1]}"></td>
+  <td><input id="t${id}" aria-label="Coste transfer" type="number" step="0.1" min="0" value="${r[2]}"></td>
+  <td><input id="p${id}" aria-label="Precio de venta" type="number" step="0.5" min="0" value="${r[3]}"></td>
+  <td><input id="q${id}" aria-label="Unidades" type="number" step="1" min="0" value="${r[4]}"></td>
+  <td class="m">–</td><td class="tot">–</td>
+  <td><button type="button" class="del" aria-label="Quitar producto">×</button></td>`;
+  tr.querySelectorAll('input').forEach(i=>i.addEventListener('input',renderF));
+  tr.querySelector('.del').onclick=()=>{tr.remove();renderF()};
+  body.appendChild(tr);
+}
+defaults.forEach(addRow);
+$('addRow').onclick=()=>{addRow(['Nuevo producto',5,1,20,0]);renderF()};
+['fStand','fTravel','fOther','fVat','fCardPct','fCardFee','fVatOn'].forEach(id=>$(id).addEventListener('input',renderF));
+
+function renderF(){
+  const vat=$('fVatOn').checked?n('fVat')/100:0;
+  const card=(n('fCardPct')/100)*(n('fCardFee')/100);
+  const fixed=n('fStand')+n('fTravel')+n('fOther');
+  let units=0,gross=0,rev=0,rows=[];
+  body.querySelectorAll('tr').forEach(tr=>{
+    const v=[...tr.querySelectorAll('input[type=number]')].map(i=>{const x=parseFloat(i.value);return isFinite(x)?x:0});
+    const [cost,tr_,price,q]=v;
+    const m=price/(1+vat)-price*card-cost-tr_;
+    rows.push([tr,m,m*q]); units+=q; gross+=m*q; rev+=price*q;
+  });
+  const maxM=Math.max(1,...rows.map(r=>Math.abs(r[1])));
+  rows.forEach(([tr,m,t])=>{
+    const w=Math.max(0,m)/maxM*40;
+    tr.querySelector('.m').innerHTML=`<span class="mbar" style="width:${w}px"></span>${eur(m)}`;
+    tr.querySelector('.m').style.color=m<0?'var(--bad)':'';
+    tr.querySelector('.tot').textContent=eur(t);
+  });
+  $('fUnits').textContent=units; $('fGross').textContent=eur(gross);
+  const profit=gross-fixed;
+  $('fProfit').textContent=eur(profit); $('fProfit').style.color=profit<0?'var(--bad)':'var(--good)';
+  $('fProfitNote').textContent=`Margen de productos ${eur(gross)} − gastos fijos ${eur(fixed)}`;
+  const avg=units>0?gross/units:0;
+  if(avg>0){
+    const be=Math.ceil(fixed/avg);
+    $('fBE').textContent=be+' ventas';
+    $('fBENote').textContent=`Con tu mezcla actual cada venta deja de media ${eur(avg)}.`;
+  } else { $('fBE').textContent='–'; $('fBENote').textContent='Añade unidades con margen positivo.'; }
+  $('fRev').textContent=eur(rev);
+  $('fRevNote').textContent=`${units} productos vendidos`;
+}
+renderF();
 </script>
 
 </body>
